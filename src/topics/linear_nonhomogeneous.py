@@ -478,6 +478,7 @@ def show_detailed_symbolic_solution(system: SystemInput) -> None:
                     r"X_p'(t)=\begin{pmatrix}-a\sin(t)+b\cos(t)\\-c\sin(t)+d\cos(t)\end{pmatrix}"
                 )
                 st.latex(r"X_p'=AX_p+f(t)")
+                st.latex(r"AX_p+f(t)=" + sp.latex(symbolic["trig_rhs_expanded"]))
                 st.latex(r"\cos(t):\quad V=AU+P")
                 st.latex(r"\sin(t):\quad -U=AV+Q")
                 st.latex(r"P=" + sp.latex(symbolic["trig_P"]) + r",\quad Q=" + sp.latex(symbolic["trig_Q"]))
@@ -626,6 +627,7 @@ def build_trig_undetermined_solution(
     cos_right = matrix * u_symbols + p_vector
     sin_left = -u_symbols
     sin_right = matrix * v_symbols + q_vector
+    rhs_expanded = sp.expand(matrix * (u_symbols * cos_t + v_symbols * sin_t) + forcing)
     equations = list(cos_left - cos_right) + list(sin_left - sin_right)
     scalar_equations = [
         sp.Eq(cos_left[0], cos_right[0]),
@@ -657,6 +659,7 @@ def build_trig_undetermined_solution(
         "trig_equations": sp.Matrix(equations),
         "trig_scalar_equations": scalar_equations,
         "trig_coefficients": coefficients,
+        "trig_rhs_expanded": rhs_expanded,
         "trig_U": u_vector,
         "trig_V": v_vector,
         "particular": particular,
