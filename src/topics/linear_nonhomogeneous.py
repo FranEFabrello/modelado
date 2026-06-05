@@ -469,13 +469,24 @@ def show_detailed_symbolic_solution(system: SystemInput) -> None:
                 st.markdown("**4) Solución particular por coeficientes indeterminados**")
                 st.caption("Método como en el pizarrón: si f(t) usa cos(t) y sin(t), se propone una particular con cos(t) y sin(t).")
                 st.latex(r"X_p(t)=U\cos(t)+V\sin(t)")
-                st.latex(r"U=" + sp.latex(symbolic["trig_U_symbols"]) + r",\quad V=" + sp.latex(symbolic["trig_V_symbols"]))
+                st.latex(r"U=\begin{pmatrix}a\\c\end{pmatrix},\quad V=\begin{pmatrix}b\\d\end{pmatrix}")
+                st.latex(
+                    r"X_p(t)=\begin{pmatrix}a\cos(t)+b\sin(t)\\c\cos(t)+d\sin(t)\end{pmatrix}"
+                )
                 st.latex(r"X_p'(t)=-U\sin(t)+V\cos(t)")
+                st.latex(
+                    r"X_p'(t)=\begin{pmatrix}-a\sin(t)+b\cos(t)\\-c\sin(t)+d\cos(t)\end{pmatrix}"
+                )
                 st.latex(r"X_p'=AX_p+f(t)")
                 st.latex(r"\cos(t):\quad V=AU+P")
                 st.latex(r"\sin(t):\quad -U=AV+Q")
                 st.latex(r"P=" + sp.latex(symbolic["trig_P"]) + r",\quad Q=" + sp.latex(symbolic["trig_Q"]))
-                st.latex(sp.latex(symbolic["trig_equations"]))
+                st.markdown("**Sistema de ecuaciones para los coeficientes**")
+                for equation in symbolic["trig_scalar_equations"]:
+                    st.latex(sp.latex(equation))
+                st.markdown("**Resolviendo coeficientes**")
+                for variable, value in symbolic["trig_coefficients"].items():
+                    st.latex(sp.latex(variable) + "=" + sp.latex(value))
                 st.latex(r"U=" + sp.latex(symbolic["trig_U"]) + r",\quad V=" + sp.latex(symbolic["trig_V"]))
                 st.latex(r"X_p(t)=" + sp.latex(symbolic["particular"]))
                 st.markdown("**5) Solución general no homogénea**")
@@ -611,7 +622,17 @@ def build_trig_undetermined_solution(
 
     u_symbols = sp.Matrix([a, c])
     v_symbols = sp.Matrix([b, d])
-    equations = list(v_symbols - matrix * u_symbols - p_vector) + list(-u_symbols - matrix * v_symbols - q_vector)
+    cos_left = v_symbols
+    cos_right = matrix * u_symbols + p_vector
+    sin_left = -u_symbols
+    sin_right = matrix * v_symbols + q_vector
+    equations = list(cos_left - cos_right) + list(sin_left - sin_right)
+    scalar_equations = [
+        sp.Eq(cos_left[0], cos_right[0]),
+        sp.Eq(cos_left[1], cos_right[1]),
+        sp.Eq(sin_left[0], sin_right[0]),
+        sp.Eq(sin_left[1], sin_right[1]),
+    ]
     solution = sp.solve(equations, [a, b, c, d], dict=True)
     if not solution:
         return None
@@ -634,6 +655,8 @@ def build_trig_undetermined_solution(
         "trig_P": p_vector,
         "trig_Q": q_vector,
         "trig_equations": sp.Matrix(equations),
+        "trig_scalar_equations": scalar_equations,
+        "trig_coefficients": coefficients,
         "trig_U": u_vector,
         "trig_V": v_vector,
         "particular": particular,
