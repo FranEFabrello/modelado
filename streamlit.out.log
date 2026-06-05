@@ -1,0 +1,116 @@
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://10.100.60.192:8501
+  External URL: http://170.239.171.152:8501
+
++------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\app.py:23 in <module>                                |
+|                                                                                      |
+|   20 topic_name = st.sidebar.selectbox("Tema", list(TOPICS))                         |
+|   21 st.sidebar.info("La app está organizada para sumar nuevos temas en `src/topics` |
+|   22                                                                                 |
+| > 23 TOPICS[topic_name]()                                                            |
+|   24                                                                                 |
+|   25                                                                                 |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:138 in render    |
+|                                                                                      |
+|    135     if system is None:                                                        |
+|    136         return                                                                |
+|    137                                                                               |
+| >  138     show_solution(system)                                                     |
+|    139                                                                               |
+|    140                                                                               |
+|    141 def read_inputs() -> SystemInput | None:                                      |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:308 in           |
+| show_solution                                                                        |
+|                                                                                      |
+|    305     show_detailed_symbolic_solution(system)                                   |
+|    306                                                                               |
+|    307     t_values = np.linspace(system.t0, system.tf, 500)                         |
+| >  308     numeric_solution = solve_numeric(system, t_values)                        |
+|    309     homogeneous_solution = solve_homogeneous(system, t_values)                |
+|    310     vector_field = st.checkbox("+------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\app.py:23 in <module>                                |
+|                                                                                      |
+|   20 topic_name = st.sidebar.selectbox("Tema", list(TOPICS))                         |
+|   21 st.sidebar.info("La app está organizada para sumar nuevos temas en `src/topics` |
+|   22                                                                                 |
+| > 23 TOPICS[topic_name]()                                                            |
+|   24                                                                                 |
+|   25                                                                                 |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:138 in render    |
+|                                                                                      |
+|    135     if system is None:                                                        |
+|    136         return                                                                |
+|    137                                                                               |
+| >  138     show_solution(system)                                                     |
+|    139                                                                               |
+|    140                                                                               |
+|    141 def read_inputs() -> SystemInput | None:                                      |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:308 in           |
+| show_solution                                                                        |
+|                                                                                      |
+|    305     show_detailed_symbolic_solution(system)                                   |
+|    306                                                                               |
+|    307     t_values = np.linspace(system.t0, system.tf, 500)                         |
+| >  308     numeric_solution = solve_numeric(system, t_values)                        |
+|    309     homogeneous_solution = solve_homogeneous(system, t_values)                |
+|    310     vector_field = st.checkbox("+------------------------- Traceback (most recent call last) --------------------------+
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\exec_code.py:129 in exec_func_with_error_handling                                  |
+|                                                                                      |
+| C:\Users\franc\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfr |
+| a8p0\LocalCache\local-packages\Python313\site-packages\streamlit\runtime\scriptrunne |
+| r\script_runner.py:689 in code_to_exec                                               |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\app.py:23 in <module>                                |
+|                                                                                      |
+|   20 topic_name = st.sidebar.selectbox("Tema", list(TOPICS))                         |
+|   21 st.sidebar.info("La app está organizada para sumar nuevos temas en `src/topics` |
+|   22                                                                                 |
+| > 23 TOPICS[topic_name]()                                                            |
+|   24                                                                                 |
+|   25                                                                                 |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:138 in render    |
+|                                                                                      |
+|    135     if system is None:                                                        |
+|    136         return                                                                |
+|    137                                                                               |
+| >  138     show_solution(system)                                                     |
+|    139                                                                               |
+|    140                                                                               |
+|    141 def read_inputs() -> SystemInput | None:                                      |
+|                                                                                      |
+| C:\Users\franc\Desktop\modelado\src\topics\linear_nonhomogeneous.py:308 in           |
+| show_solution                                                                        |
+|                                                                                      |
+|    305     show_detailed_symbolic_solution(system)                                   |
+|    306                                                                               |
+|    307     t_values = np.linspace(system.t0, system.tf, 500)                         |
+| >  308     numeric_solution = solve_numeric(system, t_values)                        |
+|    309     homogeneous_solution = solve_homogeneous(system, t_values)                |
+|    310     vector_field = st.checkbox("
