@@ -934,14 +934,12 @@ def add_interactive_vector_field(
     radius: float,
     center: np.ndarray,
 ) -> None:
-    xs = np.linspace(center[0] - radius, center[0] + radius, 17)
-    ys = np.linspace(center[1] - radius, center[1] + radius, 17)
-    arrow_x: list[float | None] = []
-    arrow_y: list[float | None] = []
-    marker_x: list[float] = []
-    marker_y: list[float] = []
+    xs = np.linspace(center[0] - radius, center[0] + radius, 13)
+    ys = np.linspace(center[1] - radius, center[1] + radius, 13)
+    sample_x: list[float] = []
+    sample_y: list[float] = []
     hover_text: list[str] = []
-    arrow_length = radius * 0.09
+    arrow_length = radius * 0.075
 
     for x_value in xs:
         for y_value in ys:
@@ -952,35 +950,53 @@ def add_interactive_vector_field(
             direction = vector / norm
             end_x = x_value + arrow_length * direction[0]
             end_y = y_value + arrow_length * direction[1]
-            arrow_x.extend([x_value, end_x, None])
-            arrow_y.extend([y_value, end_y, None])
-            marker_x.append(end_x)
-            marker_y.append(end_y)
+            add_plotly_arrow(fig, x_value, y_value, end_x, end_y)
+            sample_x.append(x_value)
+            sample_y.append(y_value)
             hover_text.append(
                 f"x={x_value:.3g}<br>y={y_value:.3g}<br>x'={vector[0]:.3g}<br>y'={vector[1]:.3g}"
             )
 
     fig.add_trace(
         go.Scatter(
-            x=arrow_x,
-            y=arrow_y,
+            x=[None],
+            y=[None],
             mode="lines",
-            line={"color": "rgba(80,80,80,0.35)", "width": 1},
+            line={"color": "rgba(80,80,80,0.55)", "width": 1},
             name="Campo vectorial",
             hoverinfo="skip",
         )
     )
     fig.add_trace(
         go.Scatter(
-            x=marker_x,
-            y=marker_y,
+            x=sample_x,
+            y=sample_y,
             mode="markers",
-            marker={"symbol": "triangle-up", "size": 6, "color": "rgba(80,80,80,0.45)"},
-            name="Dirección del campo",
+            marker={"symbol": "circle", "size": 4, "color": "rgba(80,80,80,0.18)"},
+            name="Valores del campo",
             text=hover_text,
             hovertemplate="%{text}<extra></extra>",
             showlegend=False,
         )
+    )
+
+
+def add_plotly_arrow(fig: go.Figure, start_x: float, start_y: float, end_x: float, end_y: float) -> None:
+    fig.add_annotation(
+        x=end_x,
+        y=end_y,
+        ax=start_x,
+        ay=start_y,
+        xref="x",
+        yref="y",
+        axref="x",
+        ayref="y",
+        showarrow=True,
+        arrowhead=3,
+        arrowsize=1,
+        arrowwidth=1.1,
+        arrowcolor="rgba(70,70,70,0.5)",
+        opacity=0.75,
     )
 
 
