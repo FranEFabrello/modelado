@@ -357,6 +357,7 @@ def show_solution(system: SystemInput) -> None:
             """
         )
         show_equilibrium_note(system)
+        show_nullcline_equations(system)
 
     with st.expander("Datos de la solución numérica"):
         st.dataframe(
@@ -853,6 +854,7 @@ def plot_interactive_homogeneous_portrait(system: SystemInput, eigenvalues: np.n
     fig = go.Figure()
 
     add_interactive_vector_field(fig, system.matrix, np.zeros(2), radius, np.zeros(2))
+    add_interactive_nullclines(fig, system.matrix, np.zeros(2), radius, np.zeros(2))
     add_interactive_trajectories(fig, system.matrix, np.zeros(2), starts)
     add_interactive_eigen_directions(fig, system.matrix, eigenvalues, radius, np.zeros(2))
 
@@ -892,6 +894,7 @@ def plot_interactive_constant_nonhomogeneous_portrait(system: SystemInput, eigen
     fig = go.Figure()
 
     add_interactive_vector_field(fig, system.matrix, b, radius, equilibrium)
+    add_interactive_nullclines(fig, system.matrix, b, radius, equilibrium)
     add_interactive_trajectories(fig, system.matrix, b, starts)
     add_interactive_eigen_directions(fig, system.matrix, eigenvalues, radius, equilibrium)
 
@@ -979,6 +982,64 @@ def add_interactive_vector_field(
             showlegend=False,
         )
     )
+
+
+def add_interactive_nullclines(
+    fig: go.Figure,
+    matrix: np.ndarray,
+    forcing: np.ndarray,
+    radius: float,
+    center: np.ndarray,
+) -> None:
+    x_bounds = (center[0] - radius, center[0] + radius)
+    y_bounds = (center[1] - radius, center[1] + radius)
+    x_nullcline = nullcline_points(matrix[0], forcing[0], x_bounds, y_bounds)
+    y_nullcline = nullcline_points(matrix[1], forcing[1], x_bounds, y_bounds)
+
+    if x_nullcline is not None:
+        fig.add_trace(
+            go.Scatter(
+                x=x_nullcline[0],
+                y=x_nullcline[1],
+                mode="lines",
+                line={"color": "#d62728", "width": 3, "dash": "dot"},
+                name="Nulclina x'=0",
+                hovertemplate="Nulclina x'=0<br>x=%{x:.4g}<br>y=%{y:.4g}<extra></extra>",
+            )
+        )
+    if y_nullcline is not None:
+        fig.add_trace(
+            go.Scatter(
+                x=y_nullcline[0],
+                y=y_nullcline[1],
+                mode="lines",
+                line={"color": "#2ca02c", "width": 3, "dash": "dot"},
+                name="Nulclina y'=0",
+                hovertemplate="Nulclina y'=0<br>x=%{x:.4g}<br>y=%{y:.4g}<extra></extra>",
+            )
+        )
+
+
+def nullcline_points(
+    row: np.ndarray,
+    forcing_value: float,
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+) -> tuple[list[float], list[float]] | None:
+    a, b = float(row[0]), float(row[1])
+    c = float(forcing_value)
+    x_min, x_max = x_bounds
+    y_min, y_max = y_bounds
+    if np.isclose(a, 0) and np.isclose(b, 0):
+        return None
+    if np.isclose(b, 0):
+        if np.isclose(a, 0):
+            return None
+        x_value = -c / a
+        return [x_value, x_value], [y_min, y_max]
+    xs = [x_min, x_max]
+    ys = [-(a * x_value + c) / b for x_value in xs]
+    return xs, ys
 
 
 def add_interactive_trajectories(
@@ -1102,6 +1163,20 @@ def show_equilibrium_note(system: SystemInput) -> None:
         return
     st.markdown("**Equilibrio no homogéneo constante**")
     st.write(np.round(equilibrium, 6))
+
+
+def show_nullcline_equations(system: SystemInput) -> None:
+    x, y = sp.symbols("x y")
+    matrix = sp.Matrix(system.matrix).applyfunc(lambda value: sp.nsimplify(value))
+    st.markdown("**Nulclinas**")
+    homogeneous_field = matrix * sp.Matrix([x, y])
+    st.latex(r"\text{Homogéneo: }x'=0\Rightarrow " + sp.latex(homogeneous_field[0]) + r"=0")
+    st.latex(r"\text{Homogéneo: }y'=0\Rightarrow " + sp.latex(homogeneous_field[1]) + r"=0")
+    if is_constant_forcing(system.f_exprs):
+        forcing = sp.Matrix(system.f_exprs)
+        nonhomogeneous_field = homogeneous_field + forcing
+        st.latex(r"\text{No homogéneo: }x'=0\Rightarrow " + sp.latex(nonhomogeneous_field[0]) + r"=0")
+        st.latex(r"\text{No homogéneo: }y'=0\Rightarrow " + sp.latex(nonhomogeneous_field[1]) + r"=0")
 
 
 def add_vector_field(ax, system: SystemInput, numeric_solution: np.ndarray) -> None:
