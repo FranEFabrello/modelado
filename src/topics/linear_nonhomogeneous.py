@@ -333,18 +333,27 @@ def show_solution(system: SystemInput) -> None:
         st.pyplot(plot_phase_plane(system, t_values, numeric_solution, homogeneous_solution, vector_field))
 
     st.subheader("Retrato de fase cualitativo")
-    portrait_col, notes_col = st.columns([1.35, 0.8])
+    portrait_col, shifted_col = st.columns(2)
     with portrait_col:
         st.plotly_chart(plot_interactive_homogeneous_portrait(system, eigenvalues), use_container_width=True)
-    with notes_col:
+    with shifted_col:
+        if is_constant_forcing(system.f_exprs):
+            st.plotly_chart(plot_interactive_constant_nonhomogeneous_portrait(system, eigenvalues), use_container_width=True)
+        else:
+            st.info(
+                "El retrato autónomo no homogéneo solo existe directamente cuando `f(t)` es constante. "
+                "Si `f(t)` depende del tiempo, el campo cambia con `t`; usá el plano de fase temporal."
+            )
+
+    with st.expander("Cómo leer los dos retratos", expanded=True):
         st.markdown("**Cómo leer este gráfico**")
         st.markdown(
             """
-            - El campo corresponde al sistema homogéneo `X'=AX`.
-            - Las curvas muestran trayectorias típicas desde varias condiciones iniciales.
-            - La forma alrededor del origen permite ver si es silla, nodo, foco o centro.
-            - Si `f(t)` es constante, el no homogéneo conserva esta forma pero trasladada al nuevo equilibrio.
-            - Si `f(t)` crece, la comparación con el gráfico temporal muestra la ruptura asintótica.
+            - Izquierda: sistema homogéneo `X'=AX`; su equilibrio está en `(0,0)`.
+            - Derecha: sistema no homogéneo autónomo `X'=AX+b`, cuando `f(t)=b` es constante.
+            - Si `A` es invertible, el equilibrio no homogéneo es `X*=-A^{-1}b`.
+            - La forma silla/nodo/foco/centro se preserva, pero el centro del dibujo se traslada.
+            - Si `f(t)` depende del tiempo, no hay un único campo fijo en el plano porque el campo cambia con `t`.
             """
         )
         show_equilibrium_note(system)
@@ -843,9 +852,9 @@ def plot_interactive_homogeneous_portrait(system: SystemInput, eigenvalues: np.n
     starts = sample_initial_conditions(radius)
     fig = go.Figure()
 
-    add_interactive_vector_field(fig, system, radius)
-    add_interactive_trajectories(fig, system, starts)
-    add_interactive_eigen_directions(fig, system, eigenvalues, radius)
+    add_interactive_vector_field(fig, system.matrix, np.zeros(2), radius, np.zeros(2))
+    add_interactive_trajectories(fig, system.matrix, np.zeros(2), starts)
+    add_interactive_eigen_directions(fig, system.matrix, eigenvalues, radius, np.zeros(2))
 
     fig.add_trace(
         go.Scatter(
@@ -872,9 +881,58 @@ def plot_interactive_homogeneous_portrait(system: SystemInput, eigenvalues: np.n
     return fig
 
 
-def add_interactive_vector_field(fig: go.Figure, system: SystemInput, radius: float) -> None:
-    xs = np.linspace(-radius, radius, 17)
-    ys = np.linspace(-radius, radius, 17)
+def plot_interactive_constant_nonhomogeneous_portrait(system: SystemInput, eigenvalues: np.ndarray) -> go.Figure:
+    b = np.array([float(system.f_exprs[0]), float(system.f_exprs[1])], dtype=float)
+    try:
+        equilibrium = -np.linalg.solve(system.matrix, b)
+    except np.linalg.LinAlgError:
+        equilibrium = np.zeros(2)
+    radius = max(float(np.linalg.norm(system.initial - equilibrium)) * 1.6, 4.0)
+    starts = [equilibrium + start for start in sample_initial_conditions(radius)]
+    fig = go.Figure()
+
+    add_interactive_vector_field(fig, system.matrix, b, radius, equilibrium)
+    add_interactive_trajectories(fig, system.matrix, b, starts)
+    add_interactive_eigen_directions(fig, system.matrix, eigenvalues, radius, equilibrium)
+
+    fig.add_trace(
+        go.Scatter(
+            x=[equilibrium[0]],
+            y=[equilibrium[1]],
+            mode="markers",
+            marker={"color": "purple", "size": 13, "symbol": "star"},
+            name="Equilibrio no homogéneo",
+            hovertemplate="Equilibrio no homogéneo<br>x=%{x:.4g}<br>y=%{y:.4g}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="Retrato no homogéneo X'=AX+b",
+        xaxis_title="x",
+        yaxis_title="y",
+        height=560,
+        hovermode="closest",
+        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        margin={"l": 10, "r": 10, "t": 80, "b": 10},
+    )
+    fig.update_xaxes(
+        range=[equilibrium[0] - radius, equilibrium[0] + radius],
+        zeroline=True,
+        scaleanchor="y",
+        scaleratio=1,
+    )
+    fig.update_yaxes(range=[equilibrium[1] - radius, equilibrium[1] + radius], zeroline=True)
+    return fig
+
+
+def add_interactive_vector_field(
+    fig: go.Figure,
+    matrix: np.ndarray,
+    forcing: np.ndarray,
+    radius: float,
+    center: np.ndarray,
+) -> None:
+    xs = np.linspace(center[0] - radius, center[0] + radius, 17)
+    ys = np.linspace(center[1] - radius, center[1] + radius, 17)
     arrow_x: list[float | None] = []
     arrow_y: list[float | None] = []
     marker_x: list[float] = []
@@ -884,7 +942,7 @@ def add_interactive_vector_field(fig: go.Figure, system: SystemInput, radius: fl
 
     for x_value in xs:
         for y_value in ys:
-            vector = system.matrix @ np.array([x_value, y_value], dtype=float)
+            vector = matrix @ np.array([x_value, y_value], dtype=float) + forcing
             norm = float(np.linalg.norm(vector))
             if np.isclose(norm, 0):
                 continue
@@ -923,9 +981,14 @@ def add_interactive_vector_field(fig: go.Figure, system: SystemInput, radius: fl
     )
 
 
-def add_interactive_trajectories(fig: go.Figure, system: SystemInput, starts: list[np.ndarray]) -> None:
+def add_interactive_trajectories(
+    fig: go.Figure,
+    matrix: np.ndarray,
+    forcing: np.ndarray,
+    starts: list[np.ndarray],
+) -> None:
     def rhs(_t: float, state: np.ndarray) -> np.ndarray:
-        return system.matrix @ state
+        return matrix @ state + forcing
 
     for index, start in enumerate(starts, start=1):
         forward = solve_ivp(rhs, (0, 5), start, max_step=0.04, rtol=1e-7, atol=1e-9)
@@ -947,13 +1010,14 @@ def add_interactive_trajectories(fig: go.Figure, system: SystemInput, starts: li
 
 def add_interactive_eigen_directions(
     fig: go.Figure,
-    system: SystemInput,
+    matrix: np.ndarray,
     eigenvalues: np.ndarray,
     radius: float,
+    center: np.ndarray,
 ) -> None:
     if not np.allclose(np.imag(eigenvalues), 0):
         return
-    _, eigenvectors = np.linalg.eig(system.matrix)
+    _, eigenvectors = np.linalg.eig(matrix)
     for index, eigenvalue in enumerate(eigenvalues):
         direction = np.real(eigenvectors[:, index])
         norm = np.linalg.norm(direction)
@@ -962,8 +1026,8 @@ def add_interactive_eigen_directions(
         direction = direction / norm
         fig.add_trace(
             go.Scatter(
-                x=[-radius * direction[0], radius * direction[0]],
-                y=[-radius * direction[1], radius * direction[1]],
+                x=[center[0] - radius * direction[0], center[0] + radius * direction[0]],
+                y=[center[1] - radius * direction[1], center[1] + radius * direction[1]],
                 mode="lines",
                 line={"dash": "dash", "width": 2},
                 name=f"Dirección λ={format_number(float(np.real(eigenvalue)))}",
